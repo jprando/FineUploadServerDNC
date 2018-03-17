@@ -21,7 +21,7 @@ namespace FineUploader
         public int TotalParts { get; set; }
         public long PartByteOffSet { get; set; }
         public int ChunkSize { get; set; }
-        public bool UnirArquivos { get; set; }
+        public bool JoinFiles { get; set; }
         public Guid UUI { get; set; }
 
         public FineUpload(string uploadDir)
@@ -29,60 +29,58 @@ namespace FineUploader
             _uploadDir = uploadDir;
         }
 
-        public async Task<bool> SaveAs(bool overwrite = false, bool autoCreateDirectory = true)
+        public async Task SaveAs(bool overwrite = false, bool autoCreateDirectory = true)
         {
-            var dir = _uploadDir; /// @"c:\temp";
-            var filePath = Path.Combine(dir, UUI.ToString("N"));
-            var destination = filePath;
-            if (!UnirArquivos)
+            var destination = Path.Combine(_uploadDir, UUI.ToString("N"));
+            if (!JoinFiles)
             {
+                var directory = new DirectoryInfo(destination);
                 destination = Path.Combine(destination, PartIndex.ToString("0000000000"));
                 if (autoCreateDirectory)
                 {
-                    var directory = new FileInfo(destination).Directory;
-                    if (directory != null) directory.Create();
+                    directory.Create();
                 }
-                // using (var file = new FileStream(destination, overwrite ? FileMode.Create : FileMode.CreateNew))
                 using (var file = new FileStream(destination, overwrite ? FileMode.OpenOrCreate : FileMode.CreateNew))
                 {
                     await InputStream.CopyToAsync(file);
-                    await file.FlushAsync();
-                    file.Close();
                 }
-
                 if (TotalParts == 0)
                 {
-                    var toDir = new FileInfo(destination).Directory.FullName;
-                    File.Move(destination, Path.Combine(toDir, Filename));
+                    var moveTo = Path.Combine(directory.FullName, Filename);
+                    File.Move(destination, moveTo);
                 }
             }
             else
             {
-                DirectoryInfo di = new DirectoryInfo(destination);
-                var listaPartes = di.GetFiles().OrderBy(i => i.Name);
-                using (var arquivoFinal = new FileStream(Path.Combine(destination, Filename), FileMode.Create))
+                await JoinFilesInOne(destination);
+            }
+        }
+
+        private async Task JoinFilesInOne(string destination)
+        {
+            DirectoryInfo dir = new DirectoryInfo(destination);
+            var fileList = dir.GetFiles().OrderBy(i => i.Name);
+            var endFileName = Path.Combine(destination, Filename);
+            using (var endFile = new FileStream(endFileName, FileMode.Create))
+            {
+                foreach (var itemFile in fileList)
                 {
-                    foreach (var item in listaPartes)
+                    using (var arquivoParte = itemFile.OpenRead())
                     {
-                        using (var arquivoParte = item.OpenRead())
-                        {
-                            await arquivoParte.CopyToAsync(arquivoFinal);
-                        }
-                        item.Delete();
+                        await arquivoParte.CopyToAsync(endFile);
                     }
+                    itemFile.Delete();
                 }
             }
-            return true;
         }
 
         public class FineUploaderModelBinder : IModelBinder
         {
-            public readonly string _uploadDir;
+            public readonly string _uploadDirectory;
             public FineUploaderModelBinder(IConfiguration config)
             {
-                _uploadDir = config.GetValue<string>("uploadDir");
+                _uploadDirectory = config.GetValue<string>("uploadDir");
             }
-
             public Task BindModelAsync(ModelBindingContext bindingContext)
             {
                 var _context = bindingContext.HttpContext;
@@ -95,7 +93,7 @@ namespace FineUploader
                 string qqFile = _request.Form["qqfilename"];
                 var formFilename = formUpload ? Path.GetFileName(_files[0].FileName) : null;
 
-                var upload = new FineUpload(_uploadDir)
+                var upload = new FineUpload(_uploadDirectory)
                 {
                     Filename = xFileName ?? qqFile ?? formFilename,
                     InputStream = formUpload ? _files[0].OpenReadStream() : _request.Body,
@@ -105,7 +103,7 @@ namespace FineUploader
                     PartByteOffSet = Convert.ToInt64(_request.Form["qqpartbyteoffset"]),
                     ChunkSize = Convert.ToInt32(_request.Form["qqchunksize"]),
                     UUI = new Guid(_request.Form["qquuid"].ToString()),
-                    UnirArquivos = !formUpload
+                    JoinFiles = !formUpload
                 };
 
                 bindingContext.Result = ModelBindingResult.Success(upload);
