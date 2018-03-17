@@ -1,0 +1,11 @@
+C:\Users\jeudi\source\dnc\fineupload\bin\Debug\netcoreapp2.0\fineupload.deps.json
+C:\Users\jeudi\source\dnc\fineupload\bin\Debug\netcoreapp2.0\fineupload.runtimeconfig.json
+C:\Users\jeudi\source\dnc\fineupload\bin\Debug\netcoreapp2.0\fineupload.runtimeconfig.dev.json
+C:\Users\jeudi\source\dnc\fineupload\bin\Debug\netcoreapp2.0\fineupload.dll
+C:\Users\jeudi\source\dnc\fineupload\bin\Debug\netcoreapp2.0\fineupload.pdb
+C:\Users\jeudi\source\dnc\fineupload\obj\Debug\netcoreapp2.0\fineupload.csprojResolveAssemblyReference.cache
+C:\Users\jeudi\source\dnc\fineupload\obj\Debug\netcoreapp2.0\fineupload.csproj.CoreCompileInputs.cache
+C:\Users\jeudi\source\dnc\fineupload\obj\Debug\netcoreapp2.0\fineupload.AssemblyInfoInputs.cache
+C:\Users\jeudi\source\dnc\fineupload\obj\Debug\netcoreapp2.0\fineupload.AssemblyInfo.cs
+C:\Users\jeudi\source\dnc\fineupload\obj\Debug\netcoreapp2.0\fineupload.dll
+C:\Users\jeudi\source\dnc\fineupload\obj\Debug\netcoreapp2.0\fineupload.pdb
