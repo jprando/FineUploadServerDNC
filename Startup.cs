@@ -23,8 +23,6 @@ namespace fineupload
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddMvc();
-            var config = new FineUploaderConfig();
-            services.AddSingleton<IFineUploaderConfig>(config);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

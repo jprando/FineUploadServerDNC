@@ -4,13 +4,14 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.Extensions.Configuration;
 
 namespace FineUploader
 {
     [ModelBinder(typeof(FineUploaderModelBinder))]
     public class FineUpload
     {
-        private readonly IFineUploaderConfig _config;
+        private readonly string _uploadDir;
 
         public string Filename { get; set; }
         public Stream InputStream { get; set; }
@@ -23,14 +24,14 @@ namespace FineUploader
         public bool UnirArquivos { get; set; }
         public Guid UUI { get; set; }
 
-        public FineUpload(IFineUploaderConfig config)
+        public FineUpload(string uploadDir)
         {
-            _config = config;
+            _uploadDir = uploadDir;
         }
 
         public async Task<bool> SaveAs(bool overwrite = false, bool autoCreateDirectory = true)
         {
-            var dir = _config.UploadDir; /// @"c:\temp";
+            var dir = _uploadDir; /// @"c:\temp";
             var filePath = Path.Combine(dir, UUI.ToString("N"));
             var destination = filePath;
             if (!UnirArquivos)
@@ -76,10 +77,10 @@ namespace FineUploader
 
         public class FineUploaderModelBinder : IModelBinder
         {
-            private readonly IFineUploaderConfig _config;
-            public FineUploaderModelBinder(IFineUploaderConfig config)
+            public readonly string _uploadDir;
+            public FineUploaderModelBinder(IConfiguration config)
             {
-                _config = config;
+                _uploadDir = config.GetValue<string>("uploadDir");
             }
 
             public Task BindModelAsync(ModelBindingContext bindingContext)
@@ -94,7 +95,7 @@ namespace FineUploader
                 string qqFile = _request.Form["qqfilename"];
                 var formFilename = formUpload ? Path.GetFileName(_files[0].FileName) : null;
 
-                var upload = new FineUpload(_config)
+                var upload = new FineUpload(_uploadDir)
                 {
                     Filename = xFileName ?? qqFile ?? formFilename,
                     InputStream = formUpload ? _files[0].OpenReadStream() : _request.Body,
