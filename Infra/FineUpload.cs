@@ -30,12 +30,16 @@ namespace FineUploader
             _uploadDir = uploadDir;
         }
 
-        public async Task SaveAs(bool overwrite = false, bool autoCreateDirectory = true)
+        public async Task<string> SaveAs(bool overwrite = false, bool autoCreateDirectory = true)
         {
             var rootDir = UploadId.ToString("N");
             var destination = Path.Combine(_uploadDir, DateTime.Now.ToString("yyyyMM"),
                 rootDir.Substring(00, 02), rootDir.Substring(02, 03),
-                rootDir.Substring(05, 27), UUI.ToString("N"));
+                /** OPTIONAL
+                 ** keep the files send with same uploadId
+                 ** united in the same folder
+                rootDir.Substring(05, 27),
+                ***/ UUI.ToString("N"));
             if (!JoinFiles)
             {
                 var directory = new DirectoryInfo(destination);
@@ -52,15 +56,17 @@ namespace FineUploader
                 {
                     var moveTo = Path.Combine(directory.FullName, Filename);
                     File.Move(destination, moveTo);
+                    destination = moveTo;
                 }
             }
             else
             {
-                await JoinFilesInOne(destination);
+                destination = await JoinFilesInOne(destination);
             }
+            return destination;
         }
 
-        private async Task JoinFilesInOne(string destination)
+        private async Task<string> JoinFilesInOne(string destination)
         {
             DirectoryInfo dir = new DirectoryInfo(destination);
             var fileList = dir.GetFiles().OrderBy(i => i.Name);
@@ -76,6 +82,7 @@ namespace FineUploader
                     itemFile.Delete();
                 }
             }
+            return endFileName;
         }
 
         public class FineUploaderModelBinder : IModelBinder
