@@ -13,6 +13,7 @@ namespace FineUploader
     {
         private readonly string _uploadDir;
 
+        public Guid UploadId { get; set; }
         public string Filename { get; set; }
         public Stream InputStream { get; set; }
 
@@ -31,7 +32,10 @@ namespace FineUploader
 
         public async Task SaveAs(bool overwrite = false, bool autoCreateDirectory = true)
         {
-            var destination = Path.Combine(_uploadDir, UUI.ToString("N"));
+            var rootDir = UploadId.ToString("N");
+            var destination = Path.Combine(_uploadDir, DateTime.Now.ToString("yyyyMM"),
+                rootDir.Substring(00, 02), rootDir.Substring(02, 03),
+                rootDir.Substring(05, 27), UUI.ToString("N"));
             if (!JoinFiles)
             {
                 var directory = new DirectoryInfo(destination);
@@ -83,8 +87,7 @@ namespace FineUploader
             }
             public Task BindModelAsync(ModelBindingContext bindingContext)
             {
-                var _context = bindingContext.HttpContext;
-                var _request = _context.Request;
+                var _request = bindingContext.HttpContext.Request;
                 var _files = _request.Form.Files;
                 var formUpload = _files.Count > 0;
 
@@ -95,6 +98,7 @@ namespace FineUploader
 
                 var upload = new FineUpload(_uploadDirectory)
                 {
+                    UploadId = new Guid(_request.Form["uploadID"]),
                     Filename = xFileName ?? qqFile ?? formFilename,
                     InputStream = formUpload ? _files[0].OpenReadStream() : _request.Body,
                     TotalFileSize = Convert.ToInt64(_request.Form["qqtotalfilesize"].ToString()),

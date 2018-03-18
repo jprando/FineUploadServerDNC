@@ -88,7 +88,10 @@
     // Some options to pass to the uploader are discussed on the next page
     var uploader = new qq.FineUploader({
         debug: true,
-        request: { endpoint: '/Home/Upload' },
+        request: {
+            endpoint: '/Home/Upload',
+            params: { uploadId: '@Guid.NewGuid()' }
+        },
         chunking: {
             enabled: true,
             concurrent: { enabled: true },
